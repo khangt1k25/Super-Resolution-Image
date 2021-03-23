@@ -1,13 +1,22 @@
 import torch
 from torch.utils.data import Dataset
-import torchvision
+from torchvision.models import vgg19
 import numpy as np
-import torchvision.transforms as transforms
-from PIL import Image
-import glob
 import torch.nn as nn
 import math
-from dataset import ImageDataset
+
+
+
+class FeatureExtractor(nn.Module):
+    def __init__(self):
+        super(FeatureExtractor, self).__init__()
+        vgg19_model = vgg19(pretrained=True)
+        self.feature_extractor = nn.Sequential(*list(vgg19_model.features.children())[:18])
+
+    def forward(self, img):
+
+        return self.feature_extractor(img)
+
 
 class Residual_Block(nn.Module):
     def __init__(self, in_channels):
@@ -34,6 +43,7 @@ class Upsampling_Block(nn.Module):
         )
     def forward(self, x):
         return self.net(x)
+
 
 class Generator(nn.Module):
     def __init__(self, in_channels = 3, n_residual_blocks = 16, up_scale = 4):
@@ -86,7 +96,9 @@ class Generator(nn.Module):
     
         return out
         
-        
+      =  
+
+
 class Discriminator(nn.Module):
     def __init__(self, in_channels=3):
         super(Discriminator, self).__init__()
@@ -121,26 +133,8 @@ class Discriminator(nn.Module):
         
     def forward(self, x):
         out = self.net(x)
-        print(out.shape)
+        out = torch.sigmoid(out)
         return out
     
-        
-
-if __name__=="__main__":
-    voc2012 = ImageDataset('./VOCtrainval_11-May-2012/VOCdevkit/VOC2012/JPEGImages/', (88,88))
-    dataloader = torch.utils.data.DataLoader(voc2012, 
-                                         batch_size=32, 
-                                         shuffle=True, 
-                                         num_workers=2)
-
-    gen = Generator(in_channels=3, n_residual_blocks=1)
-    disc = Discriminator(in_channels=3)
-    for b, data in enumerate(dataloader):
-        print(b)
-        lr, hr = data['lr'], data['hr']
-        out = gen(lr)
-        print(out.shape)
-        prob = disc(out)
-        break
 
  
