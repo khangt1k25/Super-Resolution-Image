@@ -6,16 +6,14 @@ import glob
 
 class ImageDataset(Dataset):
     def __init__(self, root, hr_shape):
-        hr_h, hr_w = hr_shape
-        
+        hr_h, hr_w = hr_shape 
         self.lr_transformer = transforms.Compose(
                 [
                     transforms.Resize((hr_h//4, hr_h//4), Image.BICUBIC),
                     transforms.ToTensor(), 
-                    transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
+                    transforms.Normalize([0.5, 0.5, 0.5],[0.5, 0.5, 0.5])
                 ]
         )
-        
         self.hr_transformer = transforms.Compose(
                 [
                     transforms.Resize((hr_h, hr_h), Image.BICUBIC),

@@ -6,18 +6,6 @@ import torch.nn as nn
 import math
 
 
-
-class FeatureExtractor(nn.Module):
-    def __init__(self):
-        super(FeatureExtractor, self).__init__()
-        vgg19_model = vgg19(pretrained=True)
-        self.feature_extractor = nn.Sequential(*list(vgg19_model.features.children())[:18])
-
-    def forward(self, img):
-
-        return self.feature_extractor(img)
-
-
 class Residual_Block(nn.Module):
     def __init__(self, in_channels):
         super(Residual_Block, self).__init__()
@@ -82,7 +70,7 @@ class Generator(nn.Module):
     
     def forward(self, x):
         out1 = self.block1(x)
-        
+    
         out = self.residual_blocks(out1)
         
         out2 = self.block2(out)
@@ -96,45 +84,60 @@ class Generator(nn.Module):
     
         return out
         
-      =  
 
 
 class Discriminator(nn.Module):
-    def __init__(self, in_channels=3):
+    def __init__(self):
         super(Discriminator, self).__init__()
-        # self.net = nn.Sequential(
-        #     nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, padding=1),
-        # )
-        
-        def Discriminator_Block(in_c, out_c, first=False):
-            layers = []
-            layers.append(nn.Conv2d(in_c, out_c, kernel_size=3, stride=1, padding=1))
-            
-            if first == False:
-                layers.append(nn.BatchNorm2d(out_c))
-            
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
-            layers.append(nn.Conv2d(out_c, out_c, kernel_size=3, stride=2, padding=1))
-            layers.append(nn.BatchNorm2d(out_c))
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
-            
-            return layers
-        
-        layers = []
-        in_c = in_channels
-        for i, out_c in enumerate([64, 128, 256, 512]):
-            block_layer = Discriminator_Block(in_c, out_c, first=(i==0))
-            layers.extend(block_layer)
-            in_c = out_c
-        
-        layers.append(nn.Conv2d(out_c, 1, kernel_size=3, stride=1, padding=1))
-         
-        self.net = nn.Sequential(*layers)
-        
+        self.net = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=5, padding=2),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2),
+
+            nn.Conv2d(512, 512, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2),
+
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(512, 1024, kernel_size=1),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(1024, 1, kernel_size=1)
+        )
+
     def forward(self, x):
+        batch_size = x.size(0)
         out = self.net(x)
-        out = torch.sigmoid(out)
-        return out
+        return torch.sigmoid(out.view(batch_size))
     
 
- 
+class VGGExtractor(nn.Module):
+    def __init__(self):
+        super(FeatureExtractor, self).__init__()
+        vgg19_model = vgg19(pretrained=True)
+        self.feature_extractor = nn.Sequential(*list(vgg19_model.features.children())[:18])
+
+    def forward(self, img):
+        return self.feature_extractor(img)
