@@ -1,5 +1,4 @@
 import torch
-from torch.utils.data import Dataset
 from torchvision.models import vgg19
 import numpy as np
 import torch.nn as nn
