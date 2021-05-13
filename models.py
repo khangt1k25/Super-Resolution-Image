@@ -43,7 +43,7 @@ class Generator(nn.Module):
             nn.PReLU(),
         )
         
-        
+        self.n_residual_blocks = n_residual_blocks
         res_blocks = []
         for _ in range(n_residual_blocks):
             res_blocks.append(Residual_Block(in_channels=64))
@@ -81,7 +81,7 @@ class Generator(nn.Module):
         
         out = self.block3(out)
     
-        return out
+        return (out+1)/2
         
 
 
@@ -140,3 +140,39 @@ class VGGExtractor(nn.Module):
 
     def forward(self, img):
         return self.feature_extractor(img)
+
+
+
+class SRResNet(nn.Module):
+    def __init__(self, scale_factor=4, kernel_size=9, n_channels=64):
+        super(SRResNet, self).__init__()
+
+        upsample_block_num = int(math.log(scale_factor, 2))
+        
+        self.block1 = nn.Sequential(
+            nn.Conv2d(3, n_channels, kernel_size=kernel_size, padding=kernel_size//2),
+            nn.PReLU()
+        )
+        self.residual_blocks = nn.Sequential(
+            Residual_Block(n_channels),
+            Residual_Block(n_channels),
+            Residual_Block(n_channels),
+            Residual_Block(n_channels),
+            Residual_Block(n_channels),
+            Residual_Block(n_channels),
+            Residual_Block(n_channels),
+       )
+        self.block3 = nn.Sequential(
+            nn.Conv2d(n_channels, n_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(n_channels)
+        )
+        block4 = [Upsampling_Block(n_channels, 2) for _ in range(upsample_block_num)]
+        block4.append(nn.Conv2d(n_channels, 3, kernel_size=9, padding=4))
+        self.block4 = nn.Sequential(*block4)
+    
+    def forward(self, x):
+        out1 = self.block1(x)
+        res = self.residual_blocks(out1)
+        out2 = self.block3(res)
+        out = self.block4(out1 + out2)
+        return (torch.tanh(out)+1)/2
