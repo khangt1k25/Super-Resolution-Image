@@ -33,7 +33,7 @@ class Upsampling_Block(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, in_channels = 3, n_residual_blocks = 16, up_scale = 4):
+    def __init__(self, in_channels = 3, n_residual_blocks = 7, up_scale = 4):
         super(Generator, self).__init__()
         
         self.num_upsample_block = int(math.log(up_scale, 2))

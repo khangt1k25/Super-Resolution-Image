@@ -2,6 +2,9 @@
 .vscode/
 .idea/
 
+# file
+
+
 # Vagrant
 .vagrant/
 
@@ -131,3 +134,4 @@ train/*
 compress_data/*
 pics/*
 experiments/*
+test/*
