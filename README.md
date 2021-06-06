@@ -1,2 +1,5 @@
-## Super resolution GAN
+## Super resolution image
+
+SRResnet & SRGAN implementations
+
 
