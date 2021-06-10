@@ -21,6 +21,7 @@ def calculate_psnr_y_channel(img1: Image.Image, img2: Image.Image) -> float:
 
 
 # makesure y_img1 and y_img2 in range(0, 1)
+
 def calculate_ssim_y_channel(img1: Image.Image, img2: Image.Image):
     y_img1 = convert_to_y_channel(img1)
     y_img2 = convert_to_y_channel(img2)

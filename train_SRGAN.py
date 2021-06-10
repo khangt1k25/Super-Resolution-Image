@@ -15,7 +15,7 @@ l1_loss = nn.L1Loss()
 tv_loss = TVLoss()
 
 
-class SRGAN():
+class SRGAN_Trainer():
     def __init__(self, generator, discriminator, vggExtractor, optimizer_G, optimizer_D, device):
         self.device = device
         self.generator = generator.to(device)
@@ -23,7 +23,7 @@ class SRGAN():
         self.vggExtractor = vggExtractor.to(device)
         self.optimizer_G = optimizer_G
         self.optimizer_D = optimizer_D
-        self.writer = SummaryWriter()
+
 
     def train(self, trainloader, trainloader_v2, validloader, start_epoch, end_epoch):
         
@@ -68,25 +68,17 @@ class SRGAN():
             Gloss_epoch /= (batch+1)
             Dloss_epoch /= (batch+1)
 
-            self.writer.add_scalars("Loss/train", {'G_loss':Gloss_epoch, 'D_loss':Dloss_epoch}, epoch)
             print(f'\nEpoch {epoch} -- D_loss {Dloss_epoch} -- G_loss {Gloss_epoch}\n')
           
 
             if epoch % 10 == 0:
                 psnr_valid, ssim_valid = self.valid(validloader)
                 psnr_train, ssim_train = self.valid(trainloader_v2)
-                filename = f'./checkpoint/epoch{epoch}.pt'
                 
-                torch.save({
-                    'G_state_dict':generator.state_dict(),
-                    'D_state_dict':discriminator.state_dict()
-                    }, filename
-                )
                 print(f'\nEpoch {epoch} -- PSNR train {psnr_train} -- PSNR valid {psnr_valid}\n')
                 print(f'\nEpoch {epoch} -- SSIM train {ssim_train} -- SSIM valid {ssim_valid}\n')
-
-                self.writer.add_scalars("PSNR Score", {'train': psnr_train, 'valid': psnr_valid}, epoch)
-                self.writer.add_scalars("SSIM Score", {'train': ssim_train, 'valid': ssim_valid}, epoch)      
+                self.saving(epoch)
+               
 
     def valid(self, loader):
         self.generator.eval()
@@ -113,7 +105,7 @@ class SRGAN():
     
 
     def saving(self, epoch):
-        filename = f'./checkpoint/epoch{epoch}.pt'
+        filename = f'./experiments/srgan_{epoch}.pt'
                 
         torch.save({
             'G_state_dict':generator.state_dict(),
@@ -125,7 +117,7 @@ class SRGAN():
 
 
     def load(self, epoch):
-        filename = f'./checkpoint/epoch{epoch}.pt'
+        filename = f'./experiments/srgan_{epoch}.pt'
         try:
             checkpoint = torch.load(filename)
 
@@ -172,5 +164,5 @@ if __name__ == "__main__":
     
 
     ## Training
-    srgan = SRGAN(generator, discriminator, vggExtractor, optimizer_G, optimizer_D, device)
-    srgan.train(trainloader, trainloader_v2,  validloader, 1, 50)
+    trainer = SRGAN_Trainer(generator, discriminator, vggExtractor, optimizer_G, optimizer_D, device)
+    trainer.train(trainloader, trainloader_v2,  validloader, 1, 50)

@@ -28,7 +28,7 @@ else:
 
 
 def test_for_dataset(datasetdir):
-    outputdir = os.path.join(datasetdir, "results2")
+    outputdir = os.path.join(datasetdir, "tinhtoanSRResnet")
     os.makedirs(outputdir, exist_ok=True)
     testdataset = TestDatasetFromFolder(datasetdir)
     size = len(testdataset)
@@ -55,14 +55,16 @@ def test_for_dataset(datasetdir):
         avg_ssim += ssim
 
         test_images = torch.stack([
-            display_transform()(hr_restore.squeeze(0)),
-            display_transform()(hr.cpu().squeeze(0)),
+            #display_transform()(hr_restore.squeeze(0)),
+            #display_transform()(hr.cpu().squeeze(0)),
             display_transform()(sr.cpu().squeeze(0))
         ])
         print(imagename)
-        image = utils.make_grid(test_images, nrow=3, padding=5)
+        image = utils.make_grid(test_images, nrow=1, padding=0)
         path = os.path.join(outputdir, imagename.split('.')[0] + '_psnr_%.4f_ssim_%.4f.' % (psnr, ssim) + imagename.split('.')[-1])
-        utils.save_image(image, path, padding=5)
+        utils.save_image(image, path, padding=0)
+
+
 
     avg_psnr /= (size)
     avg_ssim /= (size)
@@ -70,9 +72,9 @@ def test_for_dataset(datasetdir):
 
 
 if __name__ == '__main__':
-    DATASETS = ['pics']
+    DATASETS = ['BSD100', 'Set5', 'Set14']
     UPSCALE_FACTOR = 4
-    ROOT = './'
+    ROOT = './test/'
     for dataset in DATASETS:
         dataset_folder = os.path.join(ROOT, dataset)
         test_folder = os.path.join(dataset_folder, f'SRF_{UPSCALE_FACTOR}')

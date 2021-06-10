@@ -18,11 +18,6 @@ class SRResnet_trainer():
         self.device = device
         self.model = model.to(self.device)
         self.optimizer = optimizer.to(self.device)
-        
-        self.l = 0 #version
-        self.log_path_ssim = f'Logs/SSIM_{self.l}.txt'
-        self.log_path_psnr = f'Logs/PSNR_{self.l}.txt'
-        self.log_path_loss = f'Logs/GLoss_{self.l}.txt'
 
 
     def train(self, trainloader, trainloader_v2, validloader, start_epoch, end_epoch):
@@ -30,50 +25,37 @@ class SRResnet_trainer():
             self.model.train()
 
             loss_epoch = 0.
-            b=0
+        
             for batch, data in tqdm(enumerate(trainloader), leave=False):
+                
                 lr = Variable(data['lr']).to(self.device)
                 hr = Variable(data['hr']).to(self.device)
-              
-
                 sr = self.model(lr)
                 
-                # optimize G
-                self.optimizer.zero_grad()
-                
                 loss = criterion(sr, hr)
-                loss.backward()
 
+                self.optimizer.zero_grad()  
+                loss.backward()
                 self.optimizer.step()
 
-
                 loss_epoch += loss.item()
-                b+=1
+        
             
             
-            loss_epoch /= b
+            loss_epoch /= (batch+1)
+            print(f'\nEpoch {epoch} -- Loss {loss_epoch}\n')
 
-            psnr_valid, ssim_valid = self.valid(validloader)
-            psnr_train, ssim_train = self.valid(trainloader_v2)
+            if epoch%10==0:
+                
+                psnr_valid, ssim_valid = self.valid(validloader)
+                psnr_train, ssim_train = self.valid(trainloader_v2)
+                
+                print(f'\nEpoch {epoch} -- PSNR train {psnr_train} -- PSNR valid {psnr_valid}\n')
+                print(f'\nEpoch {epoch} -- SSIM train {ssim_train} -- SSIM valid {ssim_valid}\n')
+                
+                self.saving(epoch)
 
-            self.save_logs(loss_epoch, ssim_valid,psnr_valid)
 
-            print(f'\nEpoch {epoch} -- PSNR train {psnr_train} -- PSNR valid {psnr_valid} -- Loss {loss_epoch}\n')
-            print(f'\nEpoch {epoch} -- SSIM train {ssim_train} -- SSIM valid {ssim_valid}\n')
-
-        self.saving()
-
-    
-    def save_logs(self, loss_epoch, ssim_valid, psnr_valid):
-        with open(self.log_path_loss, 'a') as f:
-          f.write(str(loss_epoch))
-          f.write('\n')
-        with open(self.log_path_ssim, 'a') as f:
-          f.write(str(ssim_valid))
-          f.write('\n')
-        with open(self.log_path_psnr, 'a') as f:
-          f.write(str(psnr_valid))
-          f.write('\n')  
 
     def valid(self, loader):
         self.model.eval()
@@ -99,8 +81,8 @@ class SRResnet_trainer():
         return avg_psnr, avg_ssim
     
 
-    def saving(self):
-        filename = f'./checkpoint/srresnet.pt'
+    def saving(self, epoch):
+        filename = f'./experiments/srresnet_{epoch}.pt'
                 
         torch.save({
                     'model_state_dict':self.model.state_dict(),
@@ -109,8 +91,8 @@ class SRResnet_trainer():
         )
 
 
-    def load(self):
-        filename = f'./checkpoint/srresnet.pt'
+    def load(self, epoch):
+        filename = f'./experiments/srresnet_{epoch}.pt'
         try:
             checkpoint = torch.load(filename)
 
@@ -152,5 +134,5 @@ if __name__ == "__main__":
     
 
     ## Training
-    srresnet = SRResnet_trainer(model, optimizer, device)
-    srresnet.train(trainloader, trainloader_v2,  validloader, 1, 100)
+    trainer = SRResnet_trainer(model, optimizer, device)
+    trainer.train(trainloader, trainloader_v2,  validloader, 1, 100)
